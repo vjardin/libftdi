@@ -9,6 +9,12 @@ New in 1.6rc1 - 2026-01-XX
   * ftdi_eeprom_initdefaults() now takes const arguments
   * Don't spam stderr when flashing FT232H eeprom
   * EEPROM decoder: Show C/D channel mode for FT4232, B channel mode for FT2232C
+  * Expose all I/O drive settings: group0-3 drive/schmitt/slew for all Hi-Speed chips
+  * Add per-chip boolean options: power_save, clock_polarity, data_order, flow_control,
+    high_current_a/b, suspend_dbus7, external_oscillator, is_not_pnp
+  * Fix boolean options so they can be explicitly disabled (e.g. group0_schmitt=false)
+  * Make FT230X DBUS/CBUS drive settings configurable (group0/group1)
+  * Add UUID auto-generation for serial numbers (serial="%UUID%", requires libuuid)
 * CMake build system:
   * Bump minimal required version to 3.15
   * Fix building as a subproject

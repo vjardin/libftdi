@@ -13,6 +13,7 @@ sudo apt-get install libusb-1.0-devel (yum install libusb-devel)
 earlier, it is recommended you build libusbx-1.0.14 or later).
 
 sudo apt-get install libconfuse-dev (for ftdi-eeprom) (yum install libconfuse-devel)
+sudo apt-get install uuid-dev (for ftdi-eeprom UUID serial support, optional) (yum install libuuid-devel)
 sudo apt-get install swig python-dev (for python bindings) (yum install swig python-devel)
 sudo apt-get install libboost-all-dev (for unit test) (yum install boost-devel)
 

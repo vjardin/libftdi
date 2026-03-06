@@ -3,32 +3,32 @@ Here we try to document what we know about the EEPROM Structure.
 Even with a 93xx66 EEPROM, at maximum 256 Bytes are used
 
 All important things happen in the first
-0x14(FT232/245), 0x16(FT2232CD), 0x18(FT232/245R) or 0x1a (FT2232H/4432H) bytes
+0x14(FT232/245), 0x16(FT2232CD), 0x18(FT232/245R) or 0x1a (FT2232H/4232H) bytes
 
 Type   |  Use extra EEPROM space
 FT2XXB |  No
 
-Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C       TYPE_R          TYPE_2232H       TYPE_4232H
-00.0    |      0       0   channel_a_type   232R/245R        channel_a_type   0
-00.1    |      0       0   channel_a_type                    channel_a_type   0
-00.2    |      0       0   channel_a_type   high_current     channel_a_type   0
-00.3    |      0       0   channel_a_driver channel_a_driver channel_a_driver channel_a_driver
-00.4    |      0       0   high_current_a   0                0                0
-00.5    |      0       0   0                0                0                0
-00.6    |      0       0   0                0                0                0
-00.7    |      0       0   0                0                SUSPEND_DBUS7    channel_c_driver
+Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C       TYPE_R          TYPE_2232H       TYPE_4232H       TYPE_232H
+00.0    |      0       0   channel_a_type   232R/245R        channel_a_type   0                channel_a_type
+00.1    |      0       0   channel_a_type                    channel_a_type   0                channel_a_type
+00.2    |      0       0   channel_a_type   high_current     channel_a_type   0                channel_a_type
+00.3    |      0       0   channel_a_driver channel_a_driver channel_a_driver channel_a_driver channel_a_type
+00.4    |      0       0   high_current_a   0                0                channel_c_driver channel_a_driver(VCPH)
+00.5    |      0       0   0                0                0                0                0
+00.6    |      0       0   0                0                0                0                0
+00.7    |      0       0   0                0                SUSPEND_DBUS7    0                0
 
 On TYPE_R 00.0 is set for the FT245R and cleared for the FT232R
 On TYPE_R 00.3 set means D2XX, on other devices VCP
 
-01.0    |      0       0   channel_b_type                    channel_b_type   0
-01.1    |      0       0   channel_b_type                    channel_b_type   0
-01.2    |      0       0   channel_b_type   0                channel_b_type   0
-01.3    |      0       0   channel_b_driver 0                channel_b_driver channel_b_driver
-01.4    |      0       0   high_current_b   0                0                0
-01.5    |      0       0   0                0                0                0
-01.6    |      0       0   0                                 0                0
-01.7    |      0       0   0                0                0                channel_d_driver
+01.0    |      0       0   channel_b_type                    channel_b_type   0                FT1284_CLK_IDLE
+01.1    |      0       0   channel_b_type                    channel_b_type   0                FT1284_DATA_LSB
+01.2    |      0       0   channel_b_type   0                channel_b_type   0                FT1284_FLOW_CTRL
+01.3    |      0       0   channel_b_driver 0                channel_b_driver channel_b_driver 0
+01.4    |      0       0   high_current_b   0                0                channel_d_driver 0
+01.5    |      0       0   0                0                0                0                0
+01.6    |      0       0   0                                 0                0                0
+01.7    |      0       0   0                0                0                0                POWER_SAVE
 
 Fixme: Missing 4232H validation
 
@@ -63,9 +63,22 @@ Byte.BIT| TYPE_4232H
 0b.6    | channel_c_rs485enable
 0b.7    | channel_d_rs485enable
 
-Byte   | TYPE_AM TYPE_BM     TYPE_2232C   TYPE_R       TYPE_2232H       TYPE_4232H
-0c     | 0       USB-VER-LSB USB-VER-LSB  0            ?                ?
-0d     | 0       USB-VER-MSB USB-VER-MSB  0            ?                ?
+I/O Drive Settings (bytes 0x0C-0x0D)
+-------------------------------------
+Hi-Speed chips store pin drive strength, Schmitt trigger, and slew rate
+in bytes 0x0C and 0x0D. Each group occupies one nibble (4 bits):
+
+  Nibble encoding:
+    bits[1:0] = drive strength: 00=4mA, 01=8mA, 10=12mA, 11=16mA
+    bit[2]    = slow slew rate (1=slow, 0=fast)
+    bit[3]    = Schmitt trigger input (1=enabled, 0=disabled)
+
+Byte   | TYPE_AM TYPE_BM     TYPE_2232C   TYPE_R       TYPE_2232H       TYPE_4232H       TYPE_232H        TYPE_230X
+0c.3:0 | 0       USB-VER-LSB USB-VER-LSB  0            group0 (AL)      group0 (A)       group0 (ACBUS)   group0 (DBUS)
+0c.7:4 | 0       USB-VER-LSB USB-VER-LSB  0            group1 (AH)      group1 (B)       0                group1 (CBUS)
+0d.3:0 | 0       USB-VER-MSB USB-VER-MSB  0            group2 (BL)      group2 (C)       group1 (ADBUS)   0
+0d.7:4 | 0       USB-VER-MSB USB-VER-MSB  0            group3 (BH)      group3 (D)       0                0
+
 (On several FT2232H different values were observed -> The value is unused
  if change USB version is not set, so it might contain garbage)
 
@@ -93,7 +106,16 @@ CHIP values:
 
 17        UA      UA        UA           0            0                0
 18        UA      UA        UA           VENDOR       CHIP             CHIP
+
+FT232H additional fields (bytes 0x18-0x1E):
+  0x18-0x1C: CBUS functions (cbush0-cbush9), 2 per byte, low/high nibble
+  0x1E:      CHIP type
+
 19        UA      UA        UA           VENDOR       0                0
+
+FT230X additional fields:
+  0x0b:      Invert bitmask (same as TYPE_R)
+  0x1a-0x20: CBUS functions (cbusx0-cbusx6), 1 per byte
 
 1a        UA (all)
 
