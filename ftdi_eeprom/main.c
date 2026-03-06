@@ -87,6 +87,23 @@ static int parse_group0_drive(cfg_t *cfg, cfg_opt_t *opt, const char *value, voi
     return -1;
 }
 
+static int parse_slew(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result)
+{
+    if (!(strcasecmp(value, "slow")))
+    {
+        *(int *)result = 1;
+        return 0;
+    }
+    if (!(strcasecmp(value, "fast")))
+    {
+        *(int *)result = 0;
+        return 0;
+    }
+
+    cfg_error(cfg, "Invalid %s option '%s'", cfg_opt_name(opt), value);
+    return -1;
+}
+
 static int parse_cbush(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result)
 {
     static const char* options[] =
@@ -261,6 +278,26 @@ int main(int argc, char *argv[])
         CFG_INT_CB("cbusx2", -1, 0, parse_cbusx),
         CFG_INT_CB("cbusx3", -1, 0, parse_cbusx),
         CFG_INT_CB("group0_drive", -1, 0, parse_group0_drive),
+        CFG_BOOL("group0_schmitt", cfg_false, 0),
+        CFG_INT_CB("group0_slew", -1, 0, parse_slew),
+        CFG_INT_CB("group1_drive", -1, 0, parse_group0_drive),
+        CFG_BOOL("group1_schmitt", cfg_false, 0),
+        CFG_INT_CB("group1_slew", -1, 0, parse_slew),
+        CFG_INT_CB("group2_drive", -1, 0, parse_group0_drive),
+        CFG_BOOL("group2_schmitt", cfg_false, 0),
+        CFG_INT_CB("group2_slew", -1, 0, parse_slew),
+        CFG_INT_CB("group3_drive", -1, 0, parse_group0_drive),
+        CFG_BOOL("group3_schmitt", cfg_false, 0),
+        CFG_INT_CB("group3_slew", -1, 0, parse_slew),
+        CFG_BOOL("high_current_a", cfg_false, 0),
+        CFG_BOOL("high_current_b", cfg_false, 0),
+        CFG_BOOL("suspend_dbus7", cfg_false, 0),
+        CFG_BOOL("external_oscillator", cfg_false, 0),
+        CFG_BOOL("power_save", cfg_false, 0),
+        CFG_BOOL("clock_polarity", cfg_false, 0),
+        CFG_BOOL("data_order", cfg_false, 0),
+        CFG_BOOL("flow_control", cfg_false, 0),
+        CFG_BOOL("is_not_pnp", cfg_false, 0),
         CFG_BOOL("invert_txd", cfg_false, 0),
         CFG_BOOL("invert_rxd", cfg_false, 0),
         CFG_BOOL("invert_rts", cfg_false, 0),
@@ -478,6 +515,8 @@ int main(int argc, char *argv[])
     eeprom_set_value(ftdi, CHIP_TYPE, cfg_getint(cfg, "eeprom_type"));
 
     eeprom_set_value(ftdi, HIGH_CURRENT, cfg_getbool(cfg, "high_current"));
+    if (cfg_getbool(cfg, "is_not_pnp"))
+        eeprom_set_value(ftdi, IS_NOT_PNP, 1);
 
     if (ftdi->type == TYPE_R)
     {
@@ -516,6 +555,69 @@ int main(int argc, char *argv[])
             eeprom_set_value(ftdi, CBUS_FUNCTION_9, cfg_getint(cfg, "cbush9"));
         if (cfg_getint(cfg, "group0_drive") != -1)
             eeprom_set_value(ftdi, GROUP0_DRIVE, cfg_getint(cfg, "group0_drive"));
+        eeprom_set_value(ftdi, GROUP0_SCHMITT, cfg_getbool(cfg, "group0_schmitt"));
+        if (cfg_getint(cfg, "group0_slew") != -1)
+            eeprom_set_value(ftdi, GROUP0_SLEW, cfg_getint(cfg, "group0_slew"));
+        if (cfg_getint(cfg, "group1_drive") != -1)
+            eeprom_set_value(ftdi, GROUP1_DRIVE, cfg_getint(cfg, "group1_drive"));
+        eeprom_set_value(ftdi, GROUP1_SCHMITT, cfg_getbool(cfg, "group1_schmitt"));
+        if (cfg_getint(cfg, "group1_slew") != -1)
+            eeprom_set_value(ftdi, GROUP1_SLEW, cfg_getint(cfg, "group1_slew"));
+        eeprom_set_value(ftdi, POWER_SAVE, cfg_getbool(cfg, "power_save"));
+        eeprom_set_value(ftdi, CLOCK_POLARITY, cfg_getbool(cfg, "clock_polarity"));
+        eeprom_set_value(ftdi, DATA_ORDER, cfg_getbool(cfg, "data_order"));
+        eeprom_set_value(ftdi, FLOW_CONTROL, cfg_getbool(cfg, "flow_control"));
+    }
+    else if (ftdi->type == TYPE_2232H)
+    {
+        eeprom_set_value(ftdi, HIGH_CURRENT_A, cfg_getbool(cfg, "high_current_a"));
+        eeprom_set_value(ftdi, HIGH_CURRENT_B, cfg_getbool(cfg, "high_current_b"));
+        eeprom_set_value(ftdi, SUSPEND_DBUS7, cfg_getbool(cfg, "suspend_dbus7"));
+        eeprom_set_value(ftdi, EXTERNAL_OSCILLATOR, cfg_getbool(cfg, "external_oscillator"));
+        if (cfg_getint(cfg, "group0_drive") != -1)
+            eeprom_set_value(ftdi, GROUP0_DRIVE, cfg_getint(cfg, "group0_drive"));
+        eeprom_set_value(ftdi, GROUP0_SCHMITT, cfg_getbool(cfg, "group0_schmitt"));
+        if (cfg_getint(cfg, "group0_slew") != -1)
+            eeprom_set_value(ftdi, GROUP0_SLEW, cfg_getint(cfg, "group0_slew"));
+        if (cfg_getint(cfg, "group1_drive") != -1)
+            eeprom_set_value(ftdi, GROUP1_DRIVE, cfg_getint(cfg, "group1_drive"));
+        eeprom_set_value(ftdi, GROUP1_SCHMITT, cfg_getbool(cfg, "group1_schmitt"));
+        if (cfg_getint(cfg, "group1_slew") != -1)
+            eeprom_set_value(ftdi, GROUP1_SLEW, cfg_getint(cfg, "group1_slew"));
+        if (cfg_getint(cfg, "group2_drive") != -1)
+            eeprom_set_value(ftdi, GROUP2_DRIVE, cfg_getint(cfg, "group2_drive"));
+        eeprom_set_value(ftdi, GROUP2_SCHMITT, cfg_getbool(cfg, "group2_schmitt"));
+        if (cfg_getint(cfg, "group2_slew") != -1)
+            eeprom_set_value(ftdi, GROUP2_SLEW, cfg_getint(cfg, "group2_slew"));
+        if (cfg_getint(cfg, "group3_drive") != -1)
+            eeprom_set_value(ftdi, GROUP3_DRIVE, cfg_getint(cfg, "group3_drive"));
+        eeprom_set_value(ftdi, GROUP3_SCHMITT, cfg_getbool(cfg, "group3_schmitt"));
+        if (cfg_getint(cfg, "group3_slew") != -1)
+            eeprom_set_value(ftdi, GROUP3_SLEW, cfg_getint(cfg, "group3_slew"));
+    }
+    else if (ftdi->type == TYPE_4232H)
+    {
+        eeprom_set_value(ftdi, EXTERNAL_OSCILLATOR, cfg_getbool(cfg, "external_oscillator"));
+        if (cfg_getint(cfg, "group0_drive") != -1)
+            eeprom_set_value(ftdi, GROUP0_DRIVE, cfg_getint(cfg, "group0_drive"));
+        eeprom_set_value(ftdi, GROUP0_SCHMITT, cfg_getbool(cfg, "group0_schmitt"));
+        if (cfg_getint(cfg, "group0_slew") != -1)
+            eeprom_set_value(ftdi, GROUP0_SLEW, cfg_getint(cfg, "group0_slew"));
+        if (cfg_getint(cfg, "group1_drive") != -1)
+            eeprom_set_value(ftdi, GROUP1_DRIVE, cfg_getint(cfg, "group1_drive"));
+        eeprom_set_value(ftdi, GROUP1_SCHMITT, cfg_getbool(cfg, "group1_schmitt"));
+        if (cfg_getint(cfg, "group1_slew") != -1)
+            eeprom_set_value(ftdi, GROUP1_SLEW, cfg_getint(cfg, "group1_slew"));
+        if (cfg_getint(cfg, "group2_drive") != -1)
+            eeprom_set_value(ftdi, GROUP2_DRIVE, cfg_getint(cfg, "group2_drive"));
+        eeprom_set_value(ftdi, GROUP2_SCHMITT, cfg_getbool(cfg, "group2_schmitt"));
+        if (cfg_getint(cfg, "group2_slew") != -1)
+            eeprom_set_value(ftdi, GROUP2_SLEW, cfg_getint(cfg, "group2_slew"));
+        if (cfg_getint(cfg, "group3_drive") != -1)
+            eeprom_set_value(ftdi, GROUP3_DRIVE, cfg_getint(cfg, "group3_drive"));
+        eeprom_set_value(ftdi, GROUP3_SCHMITT, cfg_getbool(cfg, "group3_schmitt"));
+        if (cfg_getint(cfg, "group3_slew") != -1)
+            eeprom_set_value(ftdi, GROUP3_SLEW, cfg_getint(cfg, "group3_slew"));
     }
     else if (ftdi->type == TYPE_230X)
     {
