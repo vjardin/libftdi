@@ -629,6 +629,16 @@ int main(int argc, char *argv[])
             eeprom_set_value(ftdi, CBUS_FUNCTION_2, cfg_getint(cfg, "cbusx2"));
         if (cfg_getint(cfg, "cbusx3") != -1)
             eeprom_set_value(ftdi, CBUS_FUNCTION_3, cfg_getint(cfg, "cbusx3"));
+        if (cfg_getint(cfg, "group0_drive") != -1)
+            eeprom_set_value(ftdi, GROUP0_DRIVE, cfg_getint(cfg, "group0_drive"));
+        eeprom_set_value(ftdi, GROUP0_SCHMITT, cfg_getbool(cfg, "group0_schmitt"));
+        if (cfg_getint(cfg, "group0_slew") != -1)
+            eeprom_set_value(ftdi, GROUP0_SLEW, cfg_getint(cfg, "group0_slew"));
+        if (cfg_getint(cfg, "group1_drive") != -1)
+            eeprom_set_value(ftdi, GROUP1_DRIVE, cfg_getint(cfg, "group1_drive"));
+        eeprom_set_value(ftdi, GROUP1_SCHMITT, cfg_getbool(cfg, "group1_schmitt"));
+        if (cfg_getint(cfg, "group1_slew") != -1)
+            eeprom_set_value(ftdi, GROUP1_SLEW, cfg_getint(cfg, "group1_slew"));
     }
 
     int invert = 0;

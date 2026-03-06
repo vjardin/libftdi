@@ -3463,8 +3463,24 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             break;
         case TYPE_230X:
             output[0x00] = 0x80; /* Actually, leave the default value */
-            /*FIXME: Make DBUS & CBUS Control configurable*/
-            output[0x0c] = 0;    /* DBUS drive 4mA, CBUS drive 4mA like factory default */
+            if (eeprom->group0_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA;
+            else
+                output[0x0c] |= eeprom->group0_drive;
+            if (eeprom->group0_schmitt)
+                output[0x0c] |= IS_SCHMITT;
+            if (eeprom->group0_slew)
+                output[0x0c] |= SLOW_SLEW;
+
+            if (eeprom->group1_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA<<4;
+            else
+                output[0x0c] |= eeprom->group1_drive<<4;
+            if (eeprom->group1_schmitt)
+                output[0x0c] |= IS_SCHMITT<<4;
+            if (eeprom->group1_slew)
+                output[0x0c] |= SLOW_SLEW<<4;
+
             for (j = 0; j <= 6; j++)
             {
                 output[0x1a + j] = eeprom->cbus_function[j];
