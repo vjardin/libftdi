@@ -38,6 +38,9 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#ifdef HAVE_UUID
+#include <uuid/uuid.h>
+#endif
 
 #include <confuse.h>
 #include <libusb.h>
@@ -454,9 +457,27 @@ int main(int argc, char *argv[])
             }
         }
     }
+    const char *cfg_serial = cfg_getstr(cfg, "serial");
+    char uuid_serial[37]; /* "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\0" */
+
+    if (strcmp(cfg_serial, "%UUID%") == 0)
+    {
+#ifdef HAVE_UUID
+        uuid_t uuid;
+
+        uuid_generate(uuid);
+        uuid_unparse_upper(uuid, uuid_serial);
+        cfg_serial = uuid_serial;
+        printf("Generated UUID serial: %s\n", cfg_serial);
+#else
+        fprintf(stderr, "Error: serial=%%UUID%% requires libuuid support (not compiled in)\n");
+        exit(-1);
+#endif
+    }
+
     ftdi_eeprom_initdefaults (ftdi, cfg_getstr(cfg, "manufacturer"),
                               cfg_getstr(cfg, "product"),
-                              cfg_getstr(cfg, "serial"));
+                              cfg_serial);
 
     printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(ftdi));
     eeprom_get_value(ftdi, CHIP_SIZE, &my_eeprom_size);

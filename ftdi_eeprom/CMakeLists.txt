@@ -1,6 +1,12 @@
 find_package(Confuse REQUIRED)
 find_package(Libintl)
 
+find_path(UUID_INCLUDE_DIR uuid/uuid.h)
+find_library(UUID_LIBRARY NAMES uuid)
+if (UUID_INCLUDE_DIR AND UUID_LIBRARY)
+    set(UUID_FOUND TRUE)
+endif ()
+
 # determine docdir
 include(GNUInstallDirs)
 if (NOT CMAKE_INSTALL_DOCDIR)
@@ -15,6 +21,12 @@ message(STATUS "Building ftdi_eeprom")
 
 include_directories(${CONFUSE_INCLUDE_DIRS})
 list(APPEND libs ${CONFUSE_LIBRARIES})
+
+if (UUID_FOUND)
+    include_directories(${UUID_INCLUDE_DIR})
+    list(APPEND libs ${UUID_LIBRARY})
+    add_definitions(-DHAVE_UUID)
+endif ()
 
 if (LIBINTL_FOUND)
     include_directories(${LIBINTL_INCLUDE_DIR})
@@ -44,6 +56,9 @@ endif ()
 target_link_libraries(ftdi_eeprom ${CONFUSE_LIBRARIES})
 if (LIBINTL_FOUND)
     target_link_libraries(ftdi_eeprom ${LIBINTL_LIBRARIES})
+endif ()
+if (UUID_FOUND)
+    target_link_libraries(ftdi_eeprom ${UUID_LIBRARY})
 endif ()
 if (NOT SHAREDLIBS AND STATICLIBS)
     target_link_libraries(ftdi_eeprom ${LIBUSB_LIBRARIES})
